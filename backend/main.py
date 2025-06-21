@@ -1,9 +1,12 @@
+import requests
+import uuid
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
 import uvicorn
 
+APIKEY = "050f623fa6de1b196bf81954ebc1efc2"
 app = FastAPI(title="Weather Data System", version="1.0.0")
 
 app.add_middleware(
@@ -34,7 +37,32 @@ async def create_weather_request(request: WeatherRequest):
     3. Stores combined data with unique ID in memory
     4. Returns the ID to frontend
     """
-    pass
+    if not APIKEY:
+        raise HTTPException(status_code=500, detail="API Key Error")
+    
+    url = "http://api.weatherstack.com/historical"
+    params = {
+        "access_key": APIKEY,
+        "query": request.location,
+        "historical_date": request.date,
+        "hourly": "1"
+    }
+
+    res = requests.get(url, params=params)
+    data = res.json()
+
+    if "historical" not in data or request.date not in data["historical"]:
+        raise HTTPException(status_code=400, detail="Error fetching data")
+    
+    wid = str(uuid.uuid4())
+    weather_storage[wid] = {
+        "date": request.date,
+        "location": request.location,
+        "notes": request.notes,
+        "weather": data["historical"][request.date]
+    }
+
+    return {"id": wid}
 
 @app.get("/weather/{weather_id}")
 async def get_weather_data(weather_id: str):
