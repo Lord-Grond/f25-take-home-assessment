@@ -1,5 +1,5 @@
 # Lynkr Technical Assessment
-
+Also just a remark the free plan doesn't support historical data so I don't really have a way to test the implementation 🥀
 ## Overview
 
 Build a weather data system where users can submit weather requests and retrieve stored results by ID.
